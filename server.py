@@ -1,8 +1,8 @@
 import socket
 import threading
 
-HOST = '0.0.0.0'
-PORT = 12346
+HOST = socket.gethostbyname(socket.gethostname())
+PORT = 0
 
 clients = []
 
@@ -51,7 +51,7 @@ def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((HOST, PORT))
     server.listen(5)
-    print(f"[INFO] Server listening on {HOST}:{PORT}")
+    print(f"[INFO] Server listening on {HOST}:{server.getsockname()[1]}")
     
     while True:
         conn, addr = server.accept()
