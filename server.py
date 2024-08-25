@@ -1,7 +1,7 @@
 import socket
 import threading
 
-HOST = socket.gethostbyname(socket.gethostname())
+HOST = '0.0.0.0'
 PORT = 0
 
 clients = []
