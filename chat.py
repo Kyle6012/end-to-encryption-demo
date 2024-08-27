@@ -4,16 +4,28 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 
+# Function to select address family (IPv4 or IPv6)
+def select_address_family():
+    while True:
+        choice = input("Select address family (1 for IPv4, 2 for IPv6): ")
+        if choice == '1':
+            return socket.AF_INET
+        elif choice == '2':
+            return socket.AF_INET6
+        else:
+            print("Invalid choice. Please select 1 or 2.")
+
 HOST = input("Enter server IP: ")
 PORT = int(input("Enter server port: "))
 
-KEY = get_random_bytes(16)  
+KEY = get_random_bytes(16)
 
 def encrypt_message(message, key):
     cipher = AES.new(key, AES.MODE_CBC)
     iv = cipher.iv
     ct_bytes = cipher.encrypt(pad(message.encode(), AES.block_size))
-    return iv + ct_bytes  
+    return iv + ct_bytes
+
 def decrypt_message(ciphertext, key):
     try:
         iv = ciphertext[:AES.block_size]
@@ -22,7 +34,7 @@ def decrypt_message(ciphertext, key):
         padded_message = cipher.decrypt(ct)
         return unpad(padded_message, AES.block_size).decode()
     except (ValueError, KeyError) as e:
-        print(f"\n[ERROR] Decryption error: {e}\n")
+        print(f"[ERROR] Decryption error: {e}")
         return None
 
 def handle_receive(client_socket):
@@ -32,36 +44,36 @@ def handle_receive(client_socket):
             message = client_socket.recv(1024)
             if len(message) == 16:
                 KEY = message
-                print(f"\n[INFO] Received new encryption key from server.\n")
+                print(f"[INFO] Received new encryption key from server.")
             elif message:
                 decrypted_message = decrypt_message(message, KEY)
                 if decrypted_message is not None:
-                    print(f"\n[MESSAGE] {decrypted_message}\n")
+                    print(f"[MESSAGE] {decrypted_message}")
                 else:
-                    print("\n[ERROR] Failed to decrypt the message.\n")
+                    print("[ERROR] Failed to decrypt the message.")
             else:
-                print("\n[INFO] Server closed the connection.\n")
+                print("[INFO] Server closed the connection.")
                 break
         except Exception as e:
-            print(f"\n[ERROR] {e}\n")
+            print(f"[ERROR] {e}")
             break
 
 def start_client():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    address_family = select_address_family()
+    client_socket = socket.socket(address_family, socket.SOCK_STREAM)
     client_socket.connect((HOST, PORT))
     print(f"[INFO] Connected to server at {HOST}:{PORT}")
-    
+
     client_socket.send(KEY)
     print(f"[INFO] Sent encryption key to server.")
 
     thread = threading.Thread(target=handle_receive, args=(client_socket,))
     thread.start()
-    
+
     while True:
-        message = input("\n[SEND MESSAGE]: ")
+        message = input("[SEND MESSAGE]: ")
         encrypted_message = encrypt_message(message, KEY)
-        
         client_socket.send(encrypted_message)
-        
+
 if __name__ == "__main__":
     start_client()
