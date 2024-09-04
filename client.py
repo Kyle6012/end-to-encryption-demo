@@ -1,5 +1,6 @@
 import socket
 import threading
+import getpass
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
@@ -7,13 +8,15 @@ from Crypto.Random import get_random_bytes
 HOST = input("Enter server IP: ")
 PORT = int(input("Enter server port: "))
 
-KEY = get_random_bytes(16)  
+KEY = get_random_bytes(16)
+USERNAME = getpass.getuser()
 
 def encrypt_message(message, key):
     cipher = AES.new(key, AES.MODE_CBC)
     iv = cipher.iv
     ct_bytes = cipher.encrypt(pad(message.encode(), AES.block_size))
-    return iv + ct_bytes  
+    return iv + ct_bytes
+
 def decrypt_message(ciphertext, key):
     try:
         iv = ciphertext[:AES.block_size]
@@ -36,7 +39,7 @@ def handle_receive(client_socket):
             elif message:
                 decrypted_message = decrypt_message(message, KEY)
                 if decrypted_message is not None:
-                    print(f"\n[MESSAGE] {decrypted_message}\n")
+                    print(f"\n {decrypted_message}\n")
                 else:
                     print("\n[ERROR] Failed to decrypt the message.\n")
             else:
@@ -50,18 +53,20 @@ def start_client():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((HOST, PORT))
     print(f"[INFO] Connected to server at {HOST}:{PORT}")
-    
+
     client_socket.send(KEY)
     print(f"[INFO] Sent encryption key to server.")
 
     thread = threading.Thread(target=handle_receive, args=(client_socket,))
     thread.start()
-    
+
     while True:
         message = input("\n[SEND MESSAGE]: ")
-        encrypted_message = encrypt_message(message, KEY)
-        
+        full_message = f"{USERNAME}: {message}"
+        encrypted_message = encrypt_message(full_message, KEY)
+
         client_socket.send(encrypted_message)
-        
+
 if __name__ == "__main__":
     start_client()
+

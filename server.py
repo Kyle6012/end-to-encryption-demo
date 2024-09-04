@@ -14,7 +14,7 @@ def handle_client(conn, addr):
             if not message:
                 break
 
-            if len(message) == 16:  
+            if len(message) == 16:
                 print(f"[INFO] Received key from {addr}")
                 broadcast_key(message, conn)
             else:
@@ -23,11 +23,11 @@ def handle_client(conn, addr):
 
         except ConnectionResetError:
             break
-        
+
     conn.close()
     clients.remove(conn)
     print(f"[INFO] {addr} disconnected.")
-    
+
 def broadcast_key(key, sender_conn):
     """Broadcast the received key to all clients except the sender."""
     for client in clients:
@@ -52,12 +52,12 @@ def start_server():
     server.bind((HOST, PORT))
     server.listen(5)
     print(f"[INFO] Server listening on {HOST}:{server.getsockname()[1]}")
-    
+
     while True:
         conn, addr = server.accept()
         clients.append(conn)
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
-        
+
 if __name__ == "__main__":
     start_server()
